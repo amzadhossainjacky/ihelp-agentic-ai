@@ -83,7 +83,6 @@ for thread_id in st.session_state["thread_id_list"][::-1]:
         st.session_state['message_history'] = temp_messages
         
     
-
 ##################### Main UI ######################
 st.title("Ask me anything")
 

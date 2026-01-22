@@ -1,3 +1,4 @@
+import re
 from langgraph.graph import StateGraph, START, END
 from typing import TypedDict, Annotated, Literal
 from langchain_openai import ChatOpenAI
@@ -11,6 +12,7 @@ import os
 import json
 from dotenv import load_dotenv
 load_dotenv()
+
 
 llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini")
 
@@ -80,11 +82,13 @@ Name:"""
             'user_name': extracted_name,
             'current_stage': 'ask_age'
         }
+    
     else:
         # Name is invalid, ask again
         error_message = AIMessage(
             content="I couldn't understand your name. Please tell me your name clearly."
         )
+
         return {
             'messages': [error_message.content],
             'current_stage': 'extract_name'  # Stay in same stage
@@ -187,21 +191,62 @@ def ask_email_node(state: ChatState):
         'current_stage': 'extract_email'
     }
 
+
 # Node 6: Extract and Validate Email using LLM
 def extract_email_node(state: ChatState):
     """Extract and validate email from user input using LLM"""
-    last_user_message = next(
-        (msg.content for msg in reversed(state['messages']) if isinstance(msg, HumanMessage)),
-        None
-    )
-
+    last_user_message = None
+    for msg in reversed(state['messages']):
+        if isinstance(msg, HumanMessage):
+            last_user_message = msg.content
+            break
+    
     if not last_user_message:
-        return {}
+        return {'current_stage': 'extract_email'}
+    
+    # Use LLM to extract and validate email
+    extraction_prompt = f"""Extract the email address from the following message and validate it.
+Rules:
+- Email must have format: something@domain.extension
+- Return ONLY a JSON object with format: {{"email": "extracted_email", "valid": true/false}}
+- If email is invalid or not found, set valid to false
 
+User message: "{last_user_message}"
+
+JSON Response:"""
+    
+    response = llm.invoke([HumanMessage(content=extraction_prompt)])
+    
+    try:
+        # Extract JSON from response
+        response_text = response.content.strip()
+        # Remove markdown code blocks if present
+        if "```json" in response_text:
+            response_text = response_text.split("```json")[1].split("```")[0].strip()
+        elif "```" in response_text:
+            response_text = response_text.split("```")[1].split("```")[0].strip()
+        
+        result = json.loads(response_text)
+        
+        if result.get('valid', False):
+            email = result.get('email', '').strip()
+            # Additional regex validation
+            email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+            if re.match(email_pattern, email):
+                return {
+                    'user_email': email,
+                    'current_stage': 'complete'
+                }
+    except:
+        pass
+    
+    error_message = AIMessage(content="Please provide a valid email address (e.g., example@email.com).")
+    
     return {
-        "user_email": last_user_message,
-        "current_stage": "complete"
+        'messages': [error_message],
+        'current_stage': 'extract_email'
     }
+
     
 
 # Node 7: Complete and Thank User
@@ -250,13 +295,11 @@ Answer their questions helpfully and professionally."""
         'current_stage': 'complete'
     }
     
-    
-        
+# previous chat node
 def chat_node(state: ChatState):
     all_messages = state['messages']
     llm_response = llm.invoke(all_messages)
     return {'messages': [llm_response]}
-
 
 
 ############ Routing Functions ###################
@@ -330,7 +373,6 @@ graph.add_node("ask_email_node", ask_email_node)
 graph.add_node("extract_email_node", extract_email_node)
 graph.add_node("complete_node", complete_node)
 graph.add_node("general_chat_node", general_chat_node)
-
 # graph.add_node("chat_node", chat_node)
 
 # define edges
