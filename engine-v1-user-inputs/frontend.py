@@ -42,7 +42,6 @@ if "initialized" not in st.session_state:
         st.text(ai_message)
 
 
-
 # show user input in the chat interface
 if user_input:
     # put user input in the message history
@@ -71,7 +70,3 @@ if user_input:
             {"configurable": {"thread_id": "1"}}
         )
         st.json(state.values)
-
-    
-
-
