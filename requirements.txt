@@ -6,3 +6,4 @@ langchain_community
 python-dotenv
 langgraph-checkpoint-postgres
 streamlit
+psycopg2
