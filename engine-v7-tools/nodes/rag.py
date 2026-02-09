@@ -3,6 +3,7 @@ from service.rag.doctor_search import documents, langchain_documents, vectorstor
 from service.rag.search.hybrid import hybrid_langchain_retriever
 from utilities.llms.chat_llm import chat_llm
 from utilities.prompts.doctor_rag_search import doctor_rag_search
+from utilities.states.output_state import RagOutput
 from langchain_core.messages import HumanMessage
 import os
 
@@ -44,9 +45,11 @@ def rag_node(state: ChatState):
     llm_prompt_doctor_verification = f"""
     You are a medical appointment booking chatbot. You are given a doctor name or department name and a list of documents (all related doctor name and department name, etc.). The user input is: {user_input}. The user can say the name of the doctor or the department of the doctor. We have the found the following doctors and departments in our hospital: {result}. Verify and Tell user about the doctor or the department he is asking for. If our hospital does not have the doctor or the department he is asking for, say that we do not have the doctor or the department he is asking for.
 """
-    llm_response = chat_llm.invoke([HumanMessage(content=llm_prompt_doctor_verification)])
+    structured_llm = chat_llm.with_structured_output(RagOutput)
+    llm_response = structured_llm.invoke([HumanMessage(content=llm_prompt_doctor_verification)])
 
-    doctor_verification_result = llm_response.content
+    doctor_verification_result = llm_response.AI_response
+    # print("doctor verification result: ", doctor_verification_result)
 
     # show sample message
     # sample_message = "I got your message. I am a rag node. I will do rag things here. tell me your name"
@@ -54,5 +57,8 @@ def rag_node(state: ChatState):
     # return the message
     return {
         "messages": [doctor_verification_result],
-        "track_stage": "1"
+        "track_stage": "schedule",
+        "doctors": llm_response.doctor_names,
+        "departments": llm_response.department_names,
+        "doctor_ids": llm_response.doctor_ids
     }
