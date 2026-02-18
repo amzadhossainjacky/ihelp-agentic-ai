@@ -14,6 +14,7 @@ class ChatState(TypedDict):
     departments: list[str]
     doctor_ids: list[str]
     appointment_doctor_id: str
+    selected_appointment_day: str
     selected_appointment_date: str
     preferred_time: str
     selected_appointment_start_time: str
