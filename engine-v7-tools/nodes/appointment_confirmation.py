@@ -11,8 +11,7 @@ class AppointmentConfirmationOutput(BaseModel):
     selected_doctor_id: str = Field(..., description="The selected doctor id")
     appointment_date: str = Field(..., description="The selected appointment date (day name, ex: sunday, monday, etc.)")
     preferred_time: time = Field(..., description="The preferred time (12:00pm, 1:00pm, etc..)")
-    appointment_start_time: time = Field(..., description="The selected appointment start time (24 hour format, ex: 13:00, 14:00, etc..)")
-    appointment_end_time: time = Field(..., description="The selected appointment end time (24 hour format, ex: 13:00, 14:00, etc..)")
+    
 
 # appointment confirmation node
 def appointment_confirmation(state: ChatState):
@@ -25,6 +24,7 @@ def appointment_confirmation(state: ChatState):
     departments = state["departments"]
     doctor_ids = state["doctor_ids"]
     doctor_state = [doctors, departments, doctor_ids]
+    print("doctor state: ", doctor_state)
     # extract the selected appointment date and time from the user input using llm
     llm_prompt_appointment_confirmation = f"""
 You are a medical appointment booking system.
@@ -43,7 +43,7 @@ IMPORTANT:
 - Only return pure time.
 
 User input: {user_input}
-Doctors: {doctor_ids}
+Doctor list with id: {doctor_state}
 """
 
     # structured llm
@@ -53,8 +53,6 @@ Doctors: {doctor_ids}
     # extract the appointment date and time from the llm response
     selected_doctor_id = ai_response.selected_doctor_id
     appointment_day = ai_response.appointment_date
-    appointment_start_time = ai_response.appointment_start_time
-    appointment_end_time = ai_response.appointment_end_time
     user_preferred_time = ai_response.preferred_time
 
     # get appointment date from day name
@@ -64,8 +62,6 @@ Doctors: {doctor_ids}
     # print the extracted appointment date and time
     print("selected doctor id: ", selected_doctor_id)
     print("appointment day by name: ", appointment_day)
-    print("appointment start time: ", appointment_start_time)
-    print("appointment end time: ", appointment_end_time)
     print("user preferred time: ", user_preferred_time)
     print("appointment date: ", appointment_date)
 
@@ -76,36 +72,14 @@ Doctors: {doctor_ids}
             "track_stage": "appointment_confirmation"
         }
     
-    # insert appointment details in to the database (appointments table)
-    # Convert string → time
-    user_preferred_time_db = datetime.strptime(
-        user_preferred_time.strftime("%H:%M:%S"),
-        "%H:%M:%S"
-    ).time()
-
-    values = {
-        "thread_id": state["thread_id"],
-        "user_id": state["user_id"],
-        "doctor_id": selected_doctor_id,
-        "appointment_date": appointment_date,
-        "day_of_week": appointment_day,
-        "appointment_time": user_preferred_time_db,
-    }
-
-    try:
-        store_appointments(values)
-    except Exception as e:
-        print(f"An error occurred while storing appointment: {e}")
-
+    
     
     return {
         "messages": ["Thank you for letting me know. I will confirm the appointment with you. Please tell me your name."],
-        "selected_doctor_id": selected_doctor_id,
+        "appointment_doctor_id": selected_doctor_id,
         "selected_appointment_day": appointment_day,
         "selected_appointment_date": appointment_date,
         "preferred_time": user_preferred_time.strftime("%H:%M:%S"),
-        "selected_appointment_start_time": appointment_start_time.strftime("%H:%M:%S"),
-        "selected_appointment_end_time": appointment_end_time.strftime("%H:%M:%S"),
         "track_stage": "1"
     }
 
