@@ -58,3 +58,5 @@ ORDER BY d.name, s.day_of_week;
         "messages": [AI_response_time_slot],
         "track_stage": "appointment_confirmation"
     }
+
+    # if user want 
