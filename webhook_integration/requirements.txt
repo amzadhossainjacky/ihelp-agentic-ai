@@ -2,3 +2,8 @@ uvicorn
 fastapi
 python-dotenv
 python-multipart
+requests
+langchain_openai
+langchain_core
+langchain_community
+langchain
