@@ -17,7 +17,6 @@ def schedule_node(state: ChatState):
     
     check_state = [doctors, departments, doctor_ids]
     print("check state: ", check_state)
-   
     
     # connect to database and get the available time slots for the doctor
     # get doctors info from database
