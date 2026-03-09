@@ -35,6 +35,8 @@ graph.add_node("name", name)
 graph.add_node("age", age)
 graph.add_node("date_of_birth", date_of_birth)
 graph.add_node("phone_number", phone_number)
+# add appointment verification node (will add later)
+
 graph.add_node("chat_node", chat_node)
 # # validation nodes
 # graph.add_node("invalid_name", invalid_name)

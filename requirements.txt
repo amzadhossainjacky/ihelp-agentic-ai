@@ -10,3 +10,5 @@ psycopg2
 faiss-cpu
 sentence-transformers
 rapidfuzz
+fastapi
+uvicorn
