@@ -6,3 +6,9 @@ langchain_community
 python-dotenv
 langgraph-checkpoint-postgres
 streamlit
+psycopg2
+faiss-cpu
+sentence-transformers
+rapidfuzz
+fastapi
+uvicorn

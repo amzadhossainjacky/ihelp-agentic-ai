@@ -11,6 +11,7 @@ def name(state: ChatState):
     # get user input from chatbot
     user_input = state["messages"][-1].content
     # extract the name with llm if user provide other info with name
+
     user_name = name_validation(user_input)
 
     # get invalid name message from messages.py
@@ -26,6 +27,8 @@ def name(state: ChatState):
         # put the name in the state
         state["name"] = user_name
         print("Name extracted: ", user_name)
+        # db operation to insert name in to the database
+    
         return {
             "name": user_name,
             "messages": [ask_age_message],

@@ -24,6 +24,7 @@ def age(state: ChatState):
             "track_stage": "2",
             "messages": [invalid_age_message]
         }
+    
     else:
         # put the age in the state
         state["age"] = user_age
