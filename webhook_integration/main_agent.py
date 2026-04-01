@@ -52,7 +52,6 @@ def rag_tool():
 
 
 
-
 tools = [search_tool, get_weather, get_jobs_tool, rag_tool]
 
 # create agent
@@ -66,7 +65,4 @@ agent_response = agent.invoke(
     {"messages": [{"role": "user", "content": "Is there any job for python developer?"}]}
 )
 
-
 print(agent_response)
-
-
