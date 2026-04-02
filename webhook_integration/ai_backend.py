@@ -12,9 +12,13 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain_core.tools import tool
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.prebuilt import ToolNode, tools_condition
+from fastapi import FastAPI
+from pydantic import BaseModel
 import requests
 from dotenv import load_dotenv
 import os
+
+# from webhook_integration.webhook import process_message
 load_dotenv()
 
 # define tools
@@ -81,9 +85,9 @@ config = {'configurable': {"thread_id": thread_id}}
 
 
 # check chatbot with tools working
-response = chatbot.invoke({"messages": [HumanMessage(content="I am a laravel developer. What jobs are available for me?")]}, config=config)
+# response = chatbot.invoke({"messages": [HumanMessage(content="I am a Python developer. What jobs are available for me?")]}, config=config)
 
-print(response['messages'][-1].content)
+# print(response['messages'][-1].content)
 
 # get all the thread_ids from the database checkpointer
 def retrieve_all_threads():
@@ -93,3 +97,22 @@ def retrieve_all_threads():
 
     return list(all_threads)
 # print(retrieve_all_threads())
+
+
+# make API for chatbot
+
+app = FastAPI()
+
+class MessageData(BaseModel):
+    data: dict
+
+@app.post("/chat")
+async def chat_endpoint(data: MessageData):
+    message = data.data['message']
+    # sender_id = data.data['entry'][0]['messaging'][0]['sender']['id']
+
+    # get chatbot response
+    response = chatbot.invoke({"messages": [HumanMessage(content=message)]}, config=config)
+    ai_response = response['messages'][-1].content
+
+    return {"response": ai_response}
