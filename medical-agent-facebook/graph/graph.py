@@ -3,6 +3,7 @@ from graph.state import ConversationState
 from graph.supervisor import supervisor_node
 from graph.agents.symptions import symptom_agent_node
 from graph.agents.general import general_agent_node
+from graph.agents.booking import booking_agent_node
 
 # Define the graph structure
 
@@ -23,6 +24,7 @@ def build_graph():
     graph.add_node("supervisor", supervisor_node)
     graph.add_node("symptom_agent", symptom_agent_node)
     graph.add_node("general_agent", general_agent_node)
+    graph.add_node("booking_agent", booking_agent_node)
     
     # Add edges
     # --- Entry point ---
@@ -37,15 +39,19 @@ def build_graph():
         route_after_supervisor,
         {
             "symptom_agent": "symptom_agent",
-            "general_agent": "general_agent"
+            "general_agent": "general_agent",
+            "booking_agent": "booking_agent"
         }
     )
+    
     
     # --- All agents go to END ---
     # After an agent responds, we're done for this turn.
     # State is saved. Next message re-enters at supervisor.
-    for agent_name in ["symptom_agent", "general_agent"]:
+    for agent_name in ["symptom_agent", "general_agent", "booking_agent"]:
         graph.add_edge(agent_name, END)
+        
+    
         
     # Compile with the persistent checkpointer
     return graph.compile()

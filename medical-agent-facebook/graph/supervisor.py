@@ -12,6 +12,7 @@ Read the latest user message and decide which specialist agent should handle it.
 Available agents:
 - symptom_agent: helps users understand their symptoms and recommends a type of doctor.
 - general_agent: answers general questions about the clinic and can assist with booking.
+- booking_agent: guides users through the appointment booking process step by step.
 
 Current booking state:
 
@@ -21,7 +22,7 @@ Current booking state:
 Respond with ONLY the agent name. Nothing else. No explanation."""
 
 
-VALID_AGENTS = {"symptom_agent", "general_agent"}
+VALID_AGENTS = {"symptom_agent", "general_agent", "booking_agent"}
 
 async def supervisor_node(state: ConversationState) -> dict:
     """
@@ -43,6 +44,8 @@ async def supervisor_node(state: ConversationState) -> dict:
     ])
     
     chosen_agent = response.content.strip().lower()
+    
+    print(f"Supervisor chose agent: {chosen_agent}")  # Debugging output
     
     # Safety fallback — if LLM hallucinates an agent name
     if chosen_agent not in VALID_AGENTS:
