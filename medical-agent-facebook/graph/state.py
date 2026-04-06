@@ -1,11 +1,11 @@
-from typing import TypedDict, Annotated
+from typing import TypedDict, Annotated, Any
 from enum import Enum
 from pydantic import BaseModel, Field
 from langchain_core.messages import BaseMessage
 from langgraph.graph.message import add_messages
 
 # booking state
-class BookingState(str, Enum):
+class BookingStage(str, Enum):
     """
     Tracks exactly where the user is in the booking funnel.
     The supervisor and booking agent both use this to decide what to do next.
@@ -27,10 +27,34 @@ class ConversationState(BaseModel):
     LangGraph merges those updates back into the state automatically.
     """
     
-    booking_stage: str
+    # for testing fields - can be removed later
+    
     user_symptoms: str
     next_stage: str
     tool_call_made: str
-    next_agent: str
     
+    
+    # messages is a special field that gets merged (not replaced) when returned from a node.
     messages: Annotated[list[BaseMessage], add_messages] = Field(default_factory=list)
+    
+    # Which agent the supervisor decided to route to
+    next_agent: str = "supervisor"
+    
+    # Where in the booking funnel we are
+    booking_stage: BookingStage = BookingStage.IDLE
+    
+    # Collected during the conversation
+    symptoms: list[str] = Field(default_factory=list)
+    selected_doctor_id: str | None = None
+    selected_doctor_name: str | None = None
+    selected_slot: str | None = None
+    patient_name: str | None = None
+    patient_phone: str | None = None
+    confirmation_id: str | None = None
+    
+    # Which channel this came from (whatsapp, facebook, web)
+    channel: str = "web"
+    user_id: str = ""
+    
+    # Extra data agents want to forward (e.g. list of found doctors)
+    metadata: dict[str, Any] = Field(default_factory=dict)

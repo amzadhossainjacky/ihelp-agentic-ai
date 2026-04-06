@@ -39,4 +39,5 @@ async def symptom_agent_node(state: ConversationState) -> dict:
         "user_symptoms": recent_symptoms,
         "booking_stage": "symptom_collection",
         "next_stage": "doctor search should start"
+        
     }
