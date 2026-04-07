@@ -15,7 +15,7 @@ def route_after_supervisor(state: ConversationState) -> str:
     """
     return state.next_agent
 
-def build_graph():
+def build_graph(checkpointer):
     """Constructs the graph with nodes and edges."""
     
     graph = StateGraph(state_schema=ConversationState)
@@ -54,4 +54,4 @@ def build_graph():
     
         
     # Compile with the persistent checkpointer
-    return graph.compile()
+    return graph.compile(checkpointer=checkpointer)
