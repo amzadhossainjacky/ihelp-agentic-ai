@@ -70,4 +70,3 @@ async def webhook(data: MessageData, background_tasks: BackgroundTasks):
         return {
             "status": "error", "message": "Failed to process message"
             }
-    

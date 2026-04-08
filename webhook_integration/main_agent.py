@@ -27,7 +27,7 @@ def get_weather(location: str) -> str:
     """Get weather information for a location."""
     return f"Weather in {location}: Sunny, 72°F"
 
-
+@tool
 # job search tool
 def get_jobs_tool(job_title: str):
     """Useful for when you need to find jobs. Input should be a job title."""
@@ -43,7 +43,7 @@ def get_jobs_tool(job_title: str):
     response = requests.get(url, headers=headers, params=querystring)
     return response.json()
 
-
+@tool
 # RAG tool
 def rag_tool():
     """Retrieve relevant doctor information from the doctor database."""

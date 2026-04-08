@@ -39,8 +39,23 @@ def get_jobs_tool(job_title: str):
     response = requests.get(url, headers=headers, params=querystring)
     return response.json()
     # print(response.json())
+    
+@tool
+# get weather tool
+def get_weather(location: str) -> str:
+    """Get weather information for a location."""
+    return f"Weather in {location}: Sunny, 72°F"
 
-tools = [search, get_jobs_tool]
+@tool
+# RAG tool
+def rag_tool():
+    """Retrieve relevant doctor information from the doctor database."""
+    
+    return "Relevant information from the doctor database."
+
+
+
+tools = [search, get_jobs_tool, get_weather, rag_tool]
 
 # define llm
 llm = ChatOpenAI(api_key=os.getenv("OPENAI_API_KEY"), model="gpt-4o-mini")
@@ -103,6 +118,7 @@ def retrieve_all_threads():
 
 app = FastAPI()
 
+# define message data model for API input
 class MessageData(BaseModel):
     data: dict
 
