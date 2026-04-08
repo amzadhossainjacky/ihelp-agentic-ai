@@ -1,25 +1,28 @@
 import os
-import asyncpg
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from psycopg_pool import AsyncConnectionPool
 from dotenv import load_dotenv
+
 load_dotenv()
 
 _checkpointer = None  # module-level singleton
 
-
-async def get_checkpointer() -> AsyncPostgresSaver:
-    """
-    Returns a Postgres checkpointer (creates tables on first run).
-    This is what gives every conversation persistent memory.
-    LangGraph stores the full ConversationState after every turn.
-    The thread_id (set per user) determines which state is loaded.
-    """
+async def get_checkpointer():
+    """Returns a singleton AsyncPostgresSaver instance."""
     global _checkpointer
-    if _checkpointer is not None:
-        return _checkpointer
-
-    conn = await asyncpg.connect(os.getenv("DB_URI"))
-    _checkpointer = AsyncPostgresSaver(conn)
-    # Creates langgraph_checkpoints table in your DB automatically
-    await _checkpointer.setup()
+    if _checkpointer is None:
+        print("Initializing AsyncPostgresSaver...")
+        
+        pool = AsyncConnectionPool(
+            conninfo=os.getenv("DB_URI"),
+            max_size=10,
+            kwargs={"autocommit": True, "prepare_threshold": 0},
+            open=False  # we open it manually below
+        )
+        await pool.open()
+        
+        _checkpointer = AsyncPostgresSaver(conn=pool)
+        await _checkpointer.setup()  # creates checkpointer tables if they don't exist
+        
+        print("AsyncPostgresSaver initialized and connected to DB.")
     return _checkpointer

@@ -50,5 +50,8 @@ async def supervisor_node(state: ConversationState) -> dict:
     # Safety fallback — if LLM hallucinates an agent name
     if chosen_agent not in VALID_AGENTS:
         chosen_agent = "general_agent"
+        
+    # update state with the chosen agent for the next node to read
+    state.next_agent = chosen_agent
 
     return {"next_agent": chosen_agent}

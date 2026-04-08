@@ -1,11 +1,12 @@
 from fastapi import FastAPI, HTTPException
 from graph.graph import build_graph
 from graph.state import ConversationState
-from langchain.messages import HumanMessage, AIMessage
+from langchain_core.messages import HumanMessage, AIMessage
 from typing import Optional
 from memory.checkpointer import get_checkpointer
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
+import traceback
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -19,9 +20,11 @@ async def lifespan(app: FastAPI):
     """Runs at startup and shutdown."""
     global _graph
     checkpointer = await get_checkpointer()
+    print(f"Checkpointer type: {type(checkpointer)}")  # this will tell you exactly what it is
     _graph = build_graph(checkpointer)
     print("✅ Agent graph ready")
     yield
+    # Cleanup: Close DB connections, etc. if needed
     print("👋 Shutting down")
 
 
@@ -74,34 +77,41 @@ async def handle_message(request: ChatRequest):
 
     config = {
         "configurable": {
-            "thread_id": thread_id
+            "thread_id": thread_id,
         }
     }
 
-
+    print(f"Received message from {thread_id}: {request.message}")
+    
     try:
         result = await _graph.ainvoke(
             {
                 "messages": [HumanMessage(content=request.message)],
-                "channel": request.channel,
-                "user_id": request.user_id,
+                
+                "user_symptoms": "",
+                "next_stage": "",
+                "tool_call_made": "",
+                
             },
             config=config
         )
         
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        error_detail = {
+            "type": type(e).__name__,
+            "message": str(e) or repr(e),   # repr() as fallback
+            "traceback": traceback.format_exc()
+    }
+        print("❌ ERROR:", error_detail)     # always log server-side
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error processing message: [{type(e).__name__}] {repr(e)}"
+    )
     
     # Extract the agent's response (last message in the updated state)
     last_message = result["messages"][-1]
     
-    return ChatResponse(
-        reply=last_message.content,
-        booking_stage=result.get("booking_stage", "idle"),
-        thread_id=thread_id,
-        selected_doctor=result.get("selected_doctor_name"),
-        confirmation_id=result.get("confirmation_id"),
-    )
+    return {"response": last_message}
     
     # Create initial state with the user's message
     # state = ConversationState(
@@ -114,7 +124,7 @@ async def handle_message(request: ChatRequest):
     # )
     
     # # Run the graph with the current state
-    # result = await graph.ainvoke(state)
+    # result = await _graph.ainvoke(state, config=config)
     
     # # print the full state for debugging
     # print("Updated Conversation State:", result)
